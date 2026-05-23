@@ -77,6 +77,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    /**
+     * 核心功能支持
+     */
+
     // Room支持
     implementation(libs.androidx.room.runtime)
 
@@ -86,6 +90,9 @@ dependencies {
 
     // Kotlin 官方 JSON 序列化库
     implementation(libs.kotlinx.serialization.json)
+
+    // 用于解析照片的 EXIF 信息
+    implementation(libs.androidx.exifinterface)
 
     // 协程测试库（提供 runTest 方法）
     androidTestImplementation(libs.kotlinx.coroutines.test)

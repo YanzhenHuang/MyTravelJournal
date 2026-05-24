@@ -83,29 +83,22 @@ class BlockViewModel(
         previousBlockId: String?,
         blockContent: BlockContent
     ) = createAsyncTask {
-        val blocks = uiStateR.value.blocks
+
+        val idToBlockMutable: MutableMap<String?, BlockEntity?> =
+            uiStateR.value.blocks
+                .associateBy({ it.id }, { it })
+                .toMutableMap()
+        idToBlockMutable[null] = null
+        val idToBlock = idToBlockMutable.toMap()
 
         // 获取前一个block
-        val previousBlock = if (previousBlockId != null) {
-            blocks.find { it.id == previousBlockId }
-        } else {
-            null
-        }
+        val previousBlock = idToBlock[previousBlockId]
 
         // 确定新block的连接关系
-        val nextBlockId = if (previousBlock != null) {
-            previousBlock.nextBlockId
-        } else {
-            // 如果插入到开头，则原来的第一个block将成为新block的下一个
-            uiStateR.value.firstBlock?.id
-        }
+        val nextBlockId = previousBlock?.nextBlockId
 
         // 获取下一个block
-        val nextBlock = if (nextBlockId != null) {
-            blocks.find { it.id == nextBlockId }
-        } else {
-            null
-        }
+        val nextBlock = idToBlock[nextBlockId]
 
         // 创建新block
         val newBlock = BlockEntity(

@@ -1,6 +1,5 @@
 package com.huangyanzhen.mytraveljournal.data.db
 
-import com.huangyanzhen.mytraveljournal.data.model.BlockContent
 import com.huangyanzhen.mytraveljournal.data.model.BlockEntity
 import com.huangyanzhen.mytraveljournal.data.model.JournalEntity
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +31,10 @@ class AppRepository(private val database: AppDatabase) {
     fun observeBlocks(journalId: String): Flow<List<BlockEntity>> =
         blockDao.getBlocksForJournal(journalId)
 
+
+    fun getLastBlockFrom(journalId: String): Flow<BlockEntity?> =
+        blockDao.getLastBlockFromJournal(journalId)
+
     /**
      * 新建Journal
      * @param title 文字标题
@@ -57,8 +60,16 @@ class AppRepository(private val database: AppDatabase) {
      * 向Block数据库中添加实体，其中Block内部定义了其所属的日记的ID。
      * @param block 内容快实体
      */
-    suspend fun addBlockToJournal(block: BlockEntity) {
+    suspend fun insertOneBlock(block: BlockEntity) {
         blockDao.insertBlocks(listOf(block))
+    }
+
+    suspend fun insertBlocks(blocks: List<BlockEntity>) {
+        blockDao.insertBlocks(blocks)
+    }
+
+    suspend fun updateOneBlock(block: BlockEntity) {
+        blockDao.updateOneBlock( block)
     }
 
     /**

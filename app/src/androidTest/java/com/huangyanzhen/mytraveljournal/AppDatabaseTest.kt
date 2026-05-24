@@ -107,7 +107,7 @@ class AppDatabaseTest {
 
         // 先不管链接关系，获取到所有属于这个日记的块
         val blocksFromDb = blockDao.getBlocksForJournal(journalId).first()
-        val lastBlock = blockDao.getLastBlockFromJournal(journalId)
+        val lastBlock = blockDao.getLastBlockFromJournal(journalId).first()
         val firstBlock = blocksFromDb.first { it.id == lastBlock?.nextBlockId }
 
         // 验证1：块长度

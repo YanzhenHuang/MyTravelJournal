@@ -12,6 +12,9 @@ interface JournalDao {
     @Query("SELECT * FROM journals WHERE isDeleted = 0 ORDER BY startDate DESC")
     fun getAllActiveJournals(): Flow<List<JournalEntity>>
 
+    @Query("SELECT * FROM journals WHERE id == :id LIMIT 1")
+    fun getJournalById(id: String): Flow<JournalEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertJournal(journal: JournalEntity)
 

@@ -19,6 +19,13 @@ class AppRepository(private val database: AppDatabase) {
         journalDao.getAllActiveJournals()
 
     /**
+     * 给定一个日记ID，返回对应的JournalEntity
+     * @param journalId 日记ID
+     */
+    fun getJournalById(journalId: String): Flow<JournalEntity?> =
+        journalDao.getJournalById(journalId)
+
+    /**
      * 给定某个Journal，获取所有block
      * @param journalId 日记ID
      */
@@ -35,13 +42,15 @@ class AppRepository(private val database: AppDatabase) {
         title: String,
         startDate: Long,
         endDate: Long
-    ) {
+    ): String {
         val journal = JournalEntity(
             title = title,
             startDate = startDate,
             endDate = endDate,
         )
         journalDao.insertJournal(journal)
+
+        return journal.id
     }
 
     /**

@@ -57,40 +57,124 @@ class AppDatabaseTest {
         )
         journalDao.insertJournal(journal)
 
-        val textContent = BlockContent.TextBlock(
+        // Create the first text block
+        val textContent1 = BlockContent.TextBlock(
             segments = listOf(
                 TextSegment(text = "今天去了"),
                 TextSegment(text = "故宫", isBold = true),
                 TextSegment(text = "，非常震撼")
             )
         )
-        val block = BlockEntity(
+        val block1 = BlockEntity(
             id = "block-uuid-001",
             journalId = journalId,
-            blockOrder = 0,
-            content = textContent
+            content = textContent1
         )
-        blockDao.insertBlocks(listOf(block))
 
-        // 4. 执行读操作：通过 Flow 获取最新的数据列表，first() 表示取第一帧数据
+        // Create the second text block
+        val textContent2 = BlockContent.TextBlock(
+            segments = listOf(
+                TextSegment(text = "故宫有很多"),
+                TextSegment(text = "名胜古迹", isItalic = true), TextSegment(text = "，非常awesome")
+            )
+        )
+
+        val block2 = BlockEntity(
+            id = "block-uuid-002",
+            journalId = journalId,
+            content = textContent2,
+            previousBlockId = "block-uuid-001",
+            nextBlockId = "block-uuid-001"
+        )
+
+        // Create the third text block
+        val textContent3 = BlockContent.TextBlock(
+            segments = listOf(
+                TextSegment(text = "有天坛、天安门，以及"),
+                TextSegment(text = "很多景点", isBold = true, isItalic = true)
+            )
+        )
+        val block3 = BlockEntity(
+            id = "block-uuid-003",
+            journalId = journalId,
+            content = textContent3,
+            previousBlockId = "block-uuid-002",
+            nextBlockId = "block-uuid-001"
+        )
+        block2.nextBlockId = "block-uuid-003"
+
+        blockDao.insertBlocks(listOf(block1, block2, block3))
+
+        // 先不管链接关系，获取到所有属于这个日记的块
+        val blocksFromDb = blockDao.getBlocksForJournal(journalId).first()
+        val lastBlock = blockDao.getLastBlockFromJournal(journalId)
+        val firstBlock = blocksFromDb.first { it.id == lastBlock?.nextBlockId }
+
+        // 验证1：块长度
+        assertEquals(2, blocksFromDb.size)
+
+        // 验证2：块顺序
+        val sortedList = mutableListOf<String>()
+        var currentBlock = firstBlock
+
+        if (blocksFromDb.size <= 1) {
+            sortedList += firstBlock.id
+        } else {
+            while (currentBlock.nextBlockId != firstBlock.id) {
+                sortedList += currentBlock.id
+                currentBlock = blocksFromDb.first { it.id == currentBlock.nextBlockId }
+            }
+        }
+
+        assertEquals("block-uuid-001", sortedList[0])
+        assertEquals("block-uuid-002", sortedList[1])
+        assertEquals("block-uuid-003", sortedList[2])
+    }
+
+    @Test
+    fun insertAndReadMapBlock() = runTest {
+        val journalId = "journal-uuid-001"
+        val journal = JournalEntity(
+            id = journalId,
+            title = "测试标题",
+            startDate = 1704067200000,
+            endDate = 1704499200000
+        )
+
+        journalDao.insertJournal(journal)
+        val lat = 39.909
+        val lng = 116.397
+
+        val mapContent = BlockContent.MapBlock(
+            latitude = 39.909,
+            longitude = 116.397,
+            label = "故宫"
+        )
+
+        val block1 = BlockEntity(
+            id = "block-uuid-001",
+            journalId = journalId,
+//            blockOrder = 0,
+            content = mapContent
+        )
+
+//        val block2 = BlockEntity()
+
+        blockDao.insertBlocks(listOf(block1))
         val blocksFromDb = blockDao.getBlocksForJournal(journalId).first()
 
-        // 5. 断言验证 (Assert)
         assertEquals(1, blocksFromDb.size)
         val readBlock = blocksFromDb[0]
 
-        // 验证 TypeConverter 是否完美还原了多态对象
         assertTrue(
-            "反序列化后的 content 应该是 TextBlock 类型",
-            readBlock.content is BlockContent.TextBlock
+            "反序列化后的 content 应该是 MapBlock 类型",
+            readBlock.content is BlockContent.MapBlock
         )
 
-        val readTextContent = readBlock.content as BlockContent.TextBlock
-        assertEquals(3, readTextContent.segments.size)
-        assertEquals("故宫", readTextContent.segments[1].text)
-        assertTrue("故宫这个词应该是加粗的", readTextContent.segments[1].isBold)
+        val readMapContent = readBlock.content as BlockContent.MapBlock
 
-        println("✅ 测试通过！AST JSON 序列化与反序列化完美运行！")
+        assertEquals(lat, readMapContent.latitude, 0.001)
+        assertEquals(lng, readMapContent.longitude, 0.001)
     }
 
 
